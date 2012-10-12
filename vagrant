@@ -1,5 +1,5 @@
 #!/bin/bash
-pwdln() {
+__pwdln() {
 
    # Doing PE from the beginning of the string is needed
    # so we get a string of 0 len to break the until loop.
@@ -14,14 +14,14 @@ pwdln() {
 
 }
 
-vagrantinvestigate() {
+__vagrantinvestigate() {
 
    if [[ -f "${PWD}/.vagrant" ]];then
       echo "${PWD}/.vagrant"
       return 0
    else
       pwdmod2="${PWD}"                                     #  Since we didn't find a $PWD/.vagrant, we're going to pop
-      for (( i=2; i<=$(pwdln); i++ ));do                   #  a directory off the end of the $pwdmod2 stack until we
+      for (( i=2; i<=$(__pwdln); i++ ));do                   #  a directory off the end of the $pwdmod2 stack until we
          pwdmod2="${pwdmod2%/*}"                           #  come across a ./.vagrant. /home/igneous/proj/1 will start at
          if [[ -f "${pwdmod2}/.vagrant" ]];then                #  /home/igneous/proj because of our loop starting at 2.
             echo "${pwdmod2}/.vagrant"
@@ -55,7 +55,7 @@ _vagrant()
               return 0
             ;;
             "ssh")
-              vagrant_state_file=$(vagrantinvestigate) || return 1
+              vagrant_state_file=$(__vagrantinvestigate) || return 1
               #Got lazy here.. I'd like to eventually replace this with a pure bash solution.
               running_vm_list=$(grep 'active' $vagrant_state_file | sed -e 's/"active"://;s/,/\n/' | cut -d '"' -f 2 | tr '\n' ' ')
               COMPREPLY=($(compgen -W "${running_vm_list}" -- ${cur}))
