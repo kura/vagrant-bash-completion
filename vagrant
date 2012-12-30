@@ -57,7 +57,7 @@ _vagrant()
             "ssh")
               vagrant_state_file=$(__vagrantinvestigate) || return 1
               #Got lazy here.. I'd like to eventually replace this with a pure bash solution.
-              running_vm_list=$(grep 'active' $vagrant_state_file | sed -e 's/"active"://;s/,/\n/' | cut -d '"' -f 2 | tr '\n' ' ')
+              running_vm_list=$(grep 'active' $vagrant_state_file | sed -e 's/"active"://' | tr ',' '\n' | cut -d '"' -f 2 | tr '\n' ' ')
               COMPREPLY=($(compgen -W "${running_vm_list}" -- ${cur}))
               return 0
             ;;
