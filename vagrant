@@ -38,7 +38,7 @@ _vagrant()
 {
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
-    commands="box destroy halt help init package provision reload resume ssh ssh_config status suspend up version"
+    commands="box destroy halt help init package provision reload resume ssh ssh-config status suspend up version"
 
     if [ $COMP_CWORD == 1 ]
     then
@@ -54,7 +54,7 @@ _vagrant()
               COMPREPLY=($(compgen -W "${box_list}" -- ${cur}))
               return 0
             ;;
-            "ssh")
+            "ssh"|"provision"|"reload"|"halt"|"suspend"|"resume"|"ssh-config")
               vagrant_state_file=$(__vagrantinvestigate) || return 1
               #Got lazy here.. I'd like to eventually replace this with a pure bash solution.
               running_vm_list=$(grep 'active' $vagrant_state_file | sed -e 's/"active"://' | tr ',' '\n' | cut -d '"' -f 2 | tr '\n' ' ')
