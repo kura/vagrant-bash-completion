@@ -8,6 +8,13 @@ Debian/Ubuntu
 * . ~/bashrc
 
 
+License
+=======
+
+This software is licensed using the MIT License.
+The license is provided in the `source code repository
+<https://github.com/kura/vagrant-bash-completion/blob/master/LICENSE>`_.
+
 Notes
 =====
 
