@@ -14,6 +14,25 @@ Debian/Ubuntu
 * cp vagrant /etc/bash_completion.d/vagrant
 * . ~/bashrc
 
+OS X
+----
+
+With `homebrew <http://brew.sh/>`_ you can install the
+`vagrant-completion` recipe to use this plugin
+
+.. code:: bash
+
+    brew tap homebrew/completions
+    brew install vagrant-completion
+
+then add the following lines to your ~/.bashrc
+
+.. code:: bash
+
+    if [ -f `brew --prefix`/etc/bash_completion.d/vagrant ]; then
+	source `brew --prefix`/etc/bash_completion.d/vagrant
+    else
+
 
 License
 =======
