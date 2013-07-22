@@ -31,7 +31,7 @@ then add the following lines to your ~/.bashrc
 
     if [ -f `brew --prefix`/etc/bash_completion.d/vagrant ]; then
 	source `brew --prefix`/etc/bash_completion.d/vagrant
-    else
+    fi
 
 
 License
