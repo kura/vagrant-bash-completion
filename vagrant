@@ -28,7 +28,7 @@ __vagrantinvestigate() {
       pwdmod2="${PWD}"
       for (( i=2; i<=$(__pwdln); i++ ));do
          pwdmod2="${pwdmod2%/*}"
-         if [ -f "${pwdmod2}/.vagrant" -o -d "${pwdmod2}.vagrant" ];then
+         if [ -f "${pwdmod2}/.vagrant" -o -d "${pwdmod2}/.vagrant" ];then
             echo "${pwdmod2}/.vagrant"
             return 0
          fi
