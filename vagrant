@@ -45,13 +45,14 @@ __vagrantinvestigate() {
       return 0
    else
       #  Since we didn't find a $PWD/.vagrant, we're going to pop
-      #  pwdmod2="${PWD}" a directory off the end of the $pwdmod2
+      #  a directory off the end of the $pwdmod2
       #  stack until we come across a ./.vagrant. /home/igneous/proj/1
       #  will start at /home/igneous/proj because of our loop starting
       #  at 2.
+      pwdmod2="${PWD}"
       for (( i=2; i<=$(__pwdln); i++ ));do
          pwdmod2="${pwdmod2%/*}"
-         if [ -f "${pwdmod2}/.vagrant" -o -d "${pwdmod2}.vagrant" ];then
+         if [ -f "${pwdmod2}/.vagrant" -o -d "${pwdmod2}/.vagrant" ];then
             echo "${pwdmod2}/.vagrant"
             return 0
          fi
