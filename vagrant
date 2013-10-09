@@ -83,7 +83,7 @@ _vagrant()
               COMPREPLY=($(compgen -W "${box_list}" -- ${cur}))
               return 0
             ;;
-            "ssh"|"provision"|"reload"|"halt"|"suspend"|"resume"|"ssh-config")
+            "ssh"|"provision"|"reload"|"halt"|"suspend"|"resume"|"ssh-config"|"up")
               vagrant_state_file=$(__vagrantinvestigate) || return 1
               #Got lazy here.. I'd like to eventually replace this with a pure bash solution.
 	      if [[ -f $vagrant_state_file ]]; then 
