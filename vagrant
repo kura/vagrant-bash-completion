@@ -67,7 +67,7 @@ _vagrant()
 {
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
-    commands="box destroy halt help init package provision reload resume ssh ssh-config status suspend up version"
+    commands="box destroy halt help init package plugin provision reload resume ssh ssh-config status suspend up"
 
     if [ $COMP_CWORD == 1 ]
     then
@@ -86,9 +86,9 @@ _vagrant()
             "ssh"|"provision"|"reload"|"halt"|"suspend"|"resume"|"ssh-config"|"up")
               vagrant_state_file=$(__vagrantinvestigate) || return 1
               #Got lazy here.. I'd like to eventually replace this with a pure bash solution.
-	      if [[ -f $vagrant_state_file ]]; then 
+	      if [[ -f $vagrant_state_file ]]; then
 		  running_vm_list=$(grep 'active' $vagrant_state_file | sed -e 's/"active"://' | tr ',' '\n' | cut -d '"' -f 2 | tr '\n' ' ')
-	      else 
+	      else
 		  running_vm_list=$(find $vagrant_state_file -type f -name "id" | awk -F"/" '{print $(NF-2)}')
 	      fi
               COMPREPLY=($(compgen -W "${running_vm_list}" -- ${cur}))
@@ -97,6 +97,11 @@ _vagrant()
             "box")
               box_commands="add help list remove repackage"
               COMPREPLY=($(compgen -W "${box_commands}" -- ${cur}))
+              return 0
+            ;;
+            "plugin")
+              plugin_commands="install license list uninstall update"
+              COMPREPLY=($(compgen -W "${plugin_commands}" -- ${cur}))
               return 0
             ;;
             "help")
