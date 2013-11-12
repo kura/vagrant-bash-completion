@@ -17,6 +17,10 @@ Debian/Ubuntu
 OS X
 ----
 
+*Please note: @kura is not a Mac user, all Mac & Homebrew support
+was provided by additional contributors. I will help as much as I
+can but I can't promise anything. Sorry.*
+
 With `homebrew <http://brew.sh/>`_ you can install the
 `vagrant-completion` recipe to use this plugin
 
