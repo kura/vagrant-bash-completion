@@ -67,7 +67,7 @@ _vagrant()
 {
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
-    commands="box destroy halt help init package plugin provision reload resume ssh ssh-config status suspend up"
+    commands=$(vagrant help | tr -s ' ' | sed -e '1,/Available subcommands/ d' -e '/For help/,$ d' -e '/^\s*$/ d' | cut -f1,2 -d' ' | tr -ds '\n' '[:blank:]')
 
     if [ $COMP_CWORD == 1 ]
     then
@@ -132,4 +132,3 @@ _vagrant()
 
 }
 complete -F _vagrant vagrant
-
