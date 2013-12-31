@@ -11,8 +11,10 @@ Installation
 Debian/Ubuntu
 -------------
 
-* cp vagrant /etc/bash_completion.d/vagrant
-* . ~/bashrc
+.. code:: bash
+
+    sudo wget https://github.com/kura/vagrant-bash-completion/raw/master/vagrant -O /etc/bash_completion.d/vagrant
+
 
 OS X
 ----
