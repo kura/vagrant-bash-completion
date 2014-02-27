@@ -1,0 +1,11 @@
+Package: vagrant-bash-completion
+Priority: optional
+Section: shells
+Installed-Size: 4438
+Maintainer: Kura <kura@kura.io> 
+Architecture: all
+Version: 0.0.6
+Depends: bash-completion (>=1.0)
+Description: vagrant completions for bash
+Homepage: https://kura.io/vagrant-bash-completion
+Bugs: https://github.com/kura/vagrant-bash-completion/issues
