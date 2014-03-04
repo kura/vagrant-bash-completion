@@ -13,7 +13,7 @@ Debian/Ubuntu
 
 .. code:: bash
 
-    sudo wget https://github.com/kura/vagrant-bash-completion/raw/master/vagrant -O /etc/bash_completion.d/vagrant
+    sudo wget https://raw.github.com/kura/vagrant-bash-completion/master/etc/bash_completion.d/vagrant -O /etc/bash_completion.d/vagrant
 
 
 OS X
