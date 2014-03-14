@@ -19,6 +19,9 @@ Debian/Ubuntu
 OS X
 ----
 
+@kura is now supporting releases to homebrew-completions because
+other people stopped doing it.
+
 *Please note: @kura is not a Mac user, all Mac & Homebrew support
 was provided by additional contributors. I will help as much as I
 can but I can't promise anything. Sorry.*
