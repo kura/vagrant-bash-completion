@@ -24,10 +24,6 @@
 
 
 __pwdln() {
-
-   # Doing PE from the beginning of the string is needed
-   # so we get a string of 0 len to break the until loop.
-
    pwdmod="${PWD}/"
    itr=0
    until [[ -z "$pwdmod" ]];do
@@ -35,20 +31,13 @@ __pwdln() {
       pwdmod="${pwdmod#*/}"
    done
    echo -n $(($itr-1))
-
 }
 
 __vagrantinvestigate() {
-
     if [ -f "${PWD}/.vagrant" -o -d "${PWD}/.vagrant" ];then
       echo "${PWD}/.vagrant"
       return 0
    else
-      #  Since we didn't find a $PWD/.vagrant, we're going to pop
-      #  a directory off the end of the $pwdmod2
-      #  stack until we come across a ./.vagrant. /home/igneous/proj/1
-      #  will start at /home/igneous/proj because of our loop starting
-      #  at 2.
       pwdmod2="${PWD}"
       for (( i=2; i<=$(__pwdln); i++ ));do
          pwdmod2="${pwdmod2%/*}"
@@ -58,16 +47,13 @@ __vagrantinvestigate() {
          fi
       done
    fi
-
    return 1
-
 }
 
-_vagrant()
-{
+_vagrant() {
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
-    commands=$(vagrant help | tr -s ' ' | sed -e '1,/Available subcommands/ d' -e '/For help/,$ d' -e '/^\s*$/ d' | cut -f1,2 -d' ' | tr -ds '\n' '[:blank:]')
+    commands="box connect destroy halt help init list-commands login package plugin provision reload resume rsync rsync-auto share ssh ssh-config status suspend up"
 
     if [ $COMP_CWORD == 1 ]
     then
@@ -85,7 +71,6 @@ _vagrant()
             ;;
             "ssh"|"provision"|"reload"|"halt"|"suspend"|"resume"|"ssh-config"|"up")
               vagrant_state_file=$(__vagrantinvestigate) || return 1
-              #Got lazy here.. I'd like to eventually replace this with a pure bash solution.
 	      if [[ -f $vagrant_state_file ]]; then
 		  running_vm_list=$(grep 'active' $vagrant_state_file | sed -e 's/"active"://' | tr ',' '\n' | cut -d '"' -f 2 | tr '\n' ' ')
 	      else
