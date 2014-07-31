@@ -1,0 +1,43 @@
+#!/bin/bash
+
+__fillactions() {
+    if [ -z $1 ]
+    then
+        i=0
+    fi
+    for cmd in $2
+    do
+        if [ -z $1 ]
+        then
+            let i+=1
+            count=`echo "$2" | wc -w`
+            echo -ne "\r""Processing $i of $count..."
+        fi
+        subcommands=$(vagrant $1 ${cmd} -h 2>&1 | sed '1,/subcommands/d' | head -n-2 | sed 's/[ \t]\+//' | tr '\n' ' ')
+        options=$(vagrant $1 ${cmd} -h 2>&1 | cut -c 9-| grep '^--' | cut -f 1 -d ' ' | tr '\n' ' ')
+        actions["$1$cmd"]="$subcommands$options"
+        if [ "$subcommands" ]
+        then
+            __fillactions $cmd "$subcommands"
+        fi
+    done
+}
+
+if [ 1 -ne $# ]
+then
+    echo "You need to pass the file to be updated!"
+    exit 1
+fi
+
+declare -A actions
+commands=$(vagrant list-commands | cut -f 1 -d ' ' | tail -n+4 | tr '\n' ' ' | sed 's/ $//')
+__fillactions "" "$commands"
+
+for a in ${!actions[@]}; do
+    subcommands+=" [\"$a\"]=\"${actions["$a"]}\""
+done
+
+echo ""
+echo "Updating $1..."
+sed -i "s/^    commands=.*$/    commands=\"$commands\"/" $1
+sed -i "s/^    subcommands=.*$/    subcommands=($subcommands )/" $1
