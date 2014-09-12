@@ -4,7 +4,7 @@ Section: shells
 Installed-Size: 4225
 Maintainer: Kura <kura@kura.io> 
 Architecture: all
-Version: 0.0.8
+Version: 0.0.9
 Depends: bash-completion (>=1.0)
 Description: vagrant completions for bash
 Homepage: https://kura.io/vagrant-bash-completion
