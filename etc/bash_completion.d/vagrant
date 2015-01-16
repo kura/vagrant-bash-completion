@@ -70,7 +70,12 @@ _vagrant() {
                 return 0
                 ;;
             "up")
-                local up_commands="--no-provision"
+				if [ -f "Vagrantfile" ]
+				then
+					local up_commands=$(awk '/config.vm.define/ {print $2}' Vagrantfile | tr -d '",')
+				else
+					local up_commands="--no-provision"
+				fi
                 COMPREPLY=($(compgen -W "${up_commands}" -- ${cur}))
                 return 0
                 ;;
