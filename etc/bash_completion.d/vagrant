@@ -34,7 +34,13 @@ __pwdln() {
 }
 
 __vagrantinvestigate() {
-    if [ -f "${PWD}/.vagrant" -o -d "${PWD}/.vagrant" ];then
+   if [ -n "$VAGRANT_CWD" ];then
+     if [ -f "${VAGRANT_CWD}/.vagrant" -o -d "${VAGRANT_CWD}/.vagrant" ];then
+        echo "${VAGRANT_CWD}/.vagrant"
+        return 0
+     fi
+   fi
+   if [ -f "${PWD}/.vagrant" -o -d "${PWD}/.vagrant" ];then
       echo "${PWD}/.vagrant"
       return 0
    else
