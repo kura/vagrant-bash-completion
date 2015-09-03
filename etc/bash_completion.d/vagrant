@@ -46,11 +46,13 @@ _vagrant() {
 
     cur=${COMP_WORDS[COMP_CWORD]}
     prev=${COMP_WORDS[COMP_CWORD-1]}
-    commands=$(vagrant list-commands 2>/dev/null | tail -n+4 | awk '{print $1}' | sort)
+    __vagrantcommands=$(vagrant list-commands 2>/dev/null | tail -n+4 | awk '{print $1}' | sort)
+
+    [[ -z $__vagrantcommands ]] && return 1
 
     if (( COMP_CWORD == 1 )); then
 
-        COMPREPLY=($(compgen -W "$commands" -- "$cur"))
+        COMPREPLY=($(compgen -W "$__vagrantcommands" -- "$cur"))
         return 0
 
     elif (( COMP_CWORD == 2 )); then
@@ -75,7 +77,7 @@ _vagrant() {
                 ;;
 
             help)
-                COMPREPLY=($(compgen -W "$commands" -- "$cur"))
+                COMPREPLY=($(compgen -W "$__vagrantcommands" -- "$cur"))
                 return 0
                 ;;
 
