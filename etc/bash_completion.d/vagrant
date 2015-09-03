@@ -42,6 +42,28 @@ __vagrantinvestigate() {
     return 1
 }
 
+__vagrantrunningvms(){
+    local vagrant_state_file
+
+    vagrant_state_file=$(__vagrantinvestigate)
+
+    if [[ -f $vagrant_state_file ]]; then
+        grep active "$vagrant_state_file" | sed -e 's/"active"://' | tr ',' '\n' | cut -d '"' -f 2 | tr '\n' ' '
+    elif [[ -d $vagrant_state_file ]]; then
+        find "$vagrant_state_file" -type f -name id 2>/dev/null | awk -F/ '{print $(NF-2)}'
+    fi
+}
+
+__vagrantvms() {
+    local vagrant_state_file
+
+    vagrant_state_file=$(__vagrantinvestigate)
+
+    if [[ -d $vagrant_state_file ]]; then
+        find "$vagrant_state_file/machines" -maxdepth 1 -mindepth 1 -type d -printf '%P\n' 2>/dev/null
+    fi
+}
+
 _vagrant() {
 
     cur=${COMP_WORDS[COMP_CWORD]}
@@ -66,12 +88,7 @@ _vagrant() {
                 ;;
 
             halt|provision|reload|resume|ssh|ssh-config|suspend)
-                vagrant_state_file=$(__vagrantinvestigate) || return 1
-                if [[ -f $vagrant_state_file ]]; then
-                    running_vm_list=$(grep active "$vagrant_state_file" | sed -e 's/"active"://' | tr ',' '\n' | cut -d '"' -f 2 | tr '\n' ' ')
-                else
-                    running_vm_list=$(find "$vagrant_state_file" -type f -name id 2>/dev/null | awk -F/ '{print $(NF-2)}')
-                fi
+                running_vm_list=$(__vagrantrunningvms)
                 COMPREPLY=($(compgen -W "$running_vm_list" -- "$cur"))
                 return 0
                 ;;
@@ -100,11 +117,8 @@ _vagrant() {
                 ;;
 
             up)
-                vagrant_state_file=$(__vagrantinvestigate) || return 1
-                if [[ -d $vagrant_state_file ]]; then
-                    vm_list=$(find "$vagrant_state_file/machines" -maxdepth 1 -mindepth 1 -type d -printf '%P\n' 2>/dev/null)
-                fi
-                local up_commands='--no-provision'
+                up_commands='--no-provision'
+                vm_list=$(__vagrantvms)
                 COMPREPLY=($(compgen -W "$up_commands $vm_list" -- "$cur"))
                 return 0
                 ;;
@@ -135,6 +149,7 @@ _vagrant() {
 
             up)
                 if [[ $prev = --no-provision ]]; then
+                    vm_list=$(__vagrantvms)
                     COMPREPLY=($(compgen -W "$vm_list" -- "$cur"))
                     return 0
                 fi
