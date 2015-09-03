@@ -93,7 +93,7 @@ _vagrant() {
                 ;;
 
             destroy)
-                environments=$(vagrant global-status 2>/dev/null | awk '/^-{80}$/ {getline; while (NF != 0) {ids[$1]++; getline}} END {if (length(ids)) for (id in ids) print id; else exit(1)}') || return 1
+                environments=$(vagrant global-status 2>/dev/null | awk '/^-{80}$/ { getline; while (NF != 0) { print$1; getline } }')
                 COMPREPLY=($(compgen -W "$environments" -- "$cur"))
                 return 0
                 ;;
