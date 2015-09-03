@@ -27,40 +27,18 @@ __vagrantboxes() {
     find "$HOME/.vagrant.d/boxes" -maxdepth 1 -mindepth 1 -type d -printf '%P\n' | sed 's/-VAGRANTSLASH-/\//' 2>/dev/null
 }
 
-__pwdln() {
-    pwdmod=$PWD/
-    itr=0
-
-    until [[ -z $pwdmod ]]; do
-        itr=$(( itr + 1 ))
-        pwdmod=${pwdmod#*/}
-    done
-
-    echo -n $(( itr - 1 ))
-}
-
 __vagrantinvestigate() {
-    if [[ -n $VAGRANT_CWD ]]; then
-        if [[ -f $VAGRANT_CWD/.vagrant || -d $VAGRANT_CWD/.vagrant ]]; then
-        echo "$VAGRANT_CWD/.vagrant"
-        return 0
+    for path in "$VAGRANT_CWD" "$PWD"; do
+        if [[ -n $path ]]; then
+            until [[ $path = / ]]; do
+                if [[ -f $path/.vagrant || -d $path/.vagrant ]]; then
+                    echo "$path/.vagrant"
+                    return 0
+                fi
+                path=$(dirname "$path")
+            done
         fi
-    fi
-
-    if [[ -f $PWD/.vagrant || -d $PWD/.vagrant ]]; then
-        echo "$PWD/.vagrant"
-        return 0
-    else
-        pwdmod2=$PWD
-        for (( i=2; i<=$(__pwdln); i++ )); do
-            pwdmod2=${pwdmod2%/*}
-            if [[ -f $pwdmod2/.vagrant || -d $pwdmod2/.vagrant ]]; then
-                echo "$pwdmod2/.vagrant"
-                return 0
-            fi
-        done
-    fi
-
+    done
     return 1
 }
 
