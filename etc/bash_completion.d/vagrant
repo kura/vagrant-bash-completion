@@ -23,6 +23,10 @@
 # SOFTWARE.
 
 
+__vagrantboxes() {
+    find "$HOME/.vagrant.d/boxes" -maxdepth 1 -mindepth 1 -type d -printf '%P\n' | sed 's/-VAGRANTSLASH-/\//' 2>/dev/null
+}
+
 __pwdln() {
     pwdmod=$PWD/
     itr=0
@@ -86,7 +90,7 @@ _vagrant() {
                 if [[ -f $vagrant_state_file ]]; then
                     running_vm_list=$(grep active "$vagrant_state_file" | sed -e 's/"active"://' | tr ',' '\n' | cut -d '"' -f 2 | tr '\n' ' ')
                 else
-                    running_vm_list=$(find "$vagrant_state_file" -type f -name id | awk -F/ '{print $(NF-2)}')
+                    running_vm_list=$(find "$vagrant_state_file" -type f -name id 2>/dev/null | awk -F/ '{print $(NF-2)}')
                 fi
                 COMPREPLY=($(compgen -W "$running_vm_list" -- "$cur"))
                 return 0
@@ -98,7 +102,7 @@ _vagrant() {
                 ;;
 
             init)
-                local box_list=$(find "$HOME/.vagrant.d/boxes" -mindepth 1 -maxdepth 1 -type d -exec basename {} \;|sed -e 's/-VAGRANTSLASH-/\//')
+                local box_list=$(__vagrantboxes)
                 COMPREPLY=($(compgen -W "$box_list" -- "$cur"))
                 return 0
                 ;;
@@ -118,7 +122,7 @@ _vagrant() {
             up)
                 vagrant_state_file=$(__vagrantinvestigate) || return 1
                 if [[ -d $vagrant_state_file ]]; then
-                    vm_list=$(find "$vagrant_state_file/machines" -mindepth 1 -maxdepth 1 -type d -exec basename {} \;)
+                    vm_list=$(find "$vagrant_state_file/machines" -maxdepth 1 -mindepth 1 -type d -printf '%P\n' 2>/dev/null)
                 fi
                 local up_commands='--no-provision'
                 COMPREPLY=($(compgen -W "$up_commands $vm_list" -- "$cur"))
@@ -136,7 +140,7 @@ _vagrant() {
             box)
                 case "$prev" in
                     remove|repackage)
-                        local box_list=$(find "$HOME/.vagrant.d/boxes" -mindepth 1 -maxdepth 1 -type d -exec basename {} \;|sed -e 's/-VAGRANTSLASH-/\//')
+                        local box_list=$(__vagrantboxes)
                         COMPREPLY=($(compgen -W "$box_list" -- "$cur"))
                         return 0
                         ;;
