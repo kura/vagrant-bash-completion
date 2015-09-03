@@ -115,8 +115,6 @@ _vagrant() {
                 COMPREPLY=($(compgen -W "${snapshot_commands}" -- ${cur}))
                 return 0
                 ;;
-            *)
-            ;;
         esac
     fi
 
@@ -137,7 +135,6 @@ _vagrant() {
                       COMPREPLY=($(compgen -W "${box_list}" -- ${cur}))
                       return 0
                       ;;
-                  *)
               esac
               ;;
           snapshot)
