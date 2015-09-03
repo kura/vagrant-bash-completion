@@ -138,13 +138,11 @@ _vagrant() {
         case "$action" in
 
             box)
-                case "$prev" in
-                    remove|repackage)
-                        local box_list=$(__vagrantboxes)
-                        COMPREPLY=($(compgen -W "$box_list" -- "$cur"))
-                        return 0
-                        ;;
-                esac
+                if [[ $prev =~ ^(remove|repackage)$ ]]; then
+                    local box_list=$(__vagrantboxes)
+                    COMPREPLY=($(compgen -W "$box_list" -- "$cur"))
+                    return 0
+                fi
                 ;;
 
             snapshot)
