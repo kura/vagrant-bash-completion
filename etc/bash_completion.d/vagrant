@@ -61,13 +61,11 @@ _vagrant() {
     prev="${COMP_WORDS[COMP_CWORD-1]}"
     commands='snapshot box connect destroy docker-logs docker-run global-status halt help init list-commands login package plugin provision rdp reload resume rsync rsync-auto share ssh ssh-config status suspend up version'
 
-    if [ $COMP_CWORD == 1 ]
+    if (( COMP_CWORD == 1 ))
     then
       COMPREPLY=($(compgen -W "${commands}" -- ${cur}))
       return 0
-    fi
-
-    if [ $COMP_CWORD == 2 ]
+    elif (( COMP_CWORD == 2 ))
     then
         case "$prev" in
             init)
@@ -116,9 +114,7 @@ _vagrant() {
                 return 0
                 ;;
         esac
-    fi
-
-    if [ $COMP_CWORD == 3 ]
+    elif (( COMP_CWORD == 3 ))
     then
       action="${COMP_WORDS[COMP_CWORD-2]}"
       case "$action" in
