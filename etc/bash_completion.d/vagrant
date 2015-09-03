@@ -46,7 +46,7 @@ _vagrant() {
 
     cur=${COMP_WORDS[COMP_CWORD]}
     prev=${COMP_WORDS[COMP_CWORD-1]}
-    commands='snapshot box connect destroy docker-logs docker-run global-status halt help init list-commands login package plugin provision rdp reload resume rsync rsync-auto share ssh ssh-config status suspend up version'
+    commands=$(vagrant list-commands 2>/dev/null | tail -n+4 | awk '{print $1}' | sort)
 
     if (( COMP_CWORD == 1 )); then
 
