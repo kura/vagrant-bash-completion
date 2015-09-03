@@ -28,6 +28,8 @@ __vagrantboxes() {
 }
 
 __vagrantinvestigate() {
+    local path
+
     for path in "$VAGRANT_CWD" "$PWD"; do
         if [[ -n $path ]]; then
             until [[ $path = / ]]; do
@@ -39,6 +41,7 @@ __vagrantinvestigate() {
             done
         fi
     done
+
     return 1
 }
 
@@ -65,6 +68,8 @@ __vagrantvms() {
 }
 
 _vagrant() {
+
+    local box_commands box_list cur environments plugin_commands prev running_vm_list snapshot_commands snapshot_list up_commands vm_list
 
     cur=${COMP_WORDS[COMP_CWORD]}
     prev=${COMP_WORDS[COMP_CWORD-1]}
@@ -99,7 +104,7 @@ _vagrant() {
                 ;;
 
             init)
-                local box_list=$(__vagrantboxes)
+                box_list=$(__vagrantboxes)
                 COMPREPLY=($(compgen -W "$box_list" -- "$cur"))
                 return 0
                 ;;
@@ -133,7 +138,7 @@ _vagrant() {
 
             box)
                 if [[ $prev =~ ^(remove|repackage)$ ]]; then
-                    local box_list=$(__vagrantboxes)
+                    box_list=$(__vagrantboxes)
                     COMPREPLY=($(compgen -W "$box_list" -- "$cur"))
                     return 0
                 fi
@@ -141,7 +146,7 @@ _vagrant() {
 
             snapshot)
                 if [[ $prev = go ]]; then
-                    local snapshot_list=$(vagrant snapshot list | awk '/Name:/ { print $2 }')
+                    snapshot_list=$(vagrant snapshot list | awk '/Name:/ { print $2 }')
                     COMPREPLY=($(compgen -W "$snapshot_list" -- "$cur"))
                     return 0
                 fi
