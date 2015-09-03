@@ -92,6 +92,12 @@ _vagrant() {
                 return 0
                 ;;
 
+            destroy)
+                environments=$(vagrant global-status 2>/dev/null | awk '/^-{80}$/ {getline; while (NF != 0) {ids[$1]++; getline}} END {if (length(ids)) for (id in ids) print id; else exit(1)}') || return 1
+                COMPREPLY=($(compgen -W "$environments" -- "$cur"))
+                return 0
+                ;;
+
             halt|provision|reload|resume|ssh|ssh-config|suspend)
                 running_vm_list=$(__vagrantrunningvms)
                 COMPREPLY=($(compgen -W "$running_vm_list" -- "$cur"))
