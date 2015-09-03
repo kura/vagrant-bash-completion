@@ -59,7 +59,7 @@ __vagrantinvestigate() {
 _vagrant() {
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
-    commands="snapshot box connect destroy docker-logs docker-run global-status halt help init list-commands login package plugin provision rdp reload resume rsync rsync-auto share ssh ssh-config status suspend up version"
+    commands='snapshot box connect destroy docker-logs docker-run global-status halt help init list-commands login package plugin provision rdp reload resume rsync rsync-auto share ssh ssh-config status suspend up version'
 
     if [ $COMP_CWORD == 1 ]
     then
@@ -70,22 +70,22 @@ _vagrant() {
     if [ $COMP_CWORD == 2 ]
     then
         case "$prev" in
-            "init")
+            init)
                 local box_list=$(find $HOME/.vagrant.d/boxes -mindepth 1 -maxdepth 1 -type d -exec basename {} \;|sed -e 's/-VAGRANTSLASH-/\//')
                 COMPREPLY=($(compgen -W "${box_list}" -- ${cur}))
                 return 0
                 ;;
-            "up")
+            up)
                 vagrant_state_file=$(__vagrantinvestigate) || return 1
                 if [[ -d $vagrant_state_file ]]
                 then
                     vm_list=$(find $vagrant_state_file/machines -mindepth 1 -maxdepth 1 -type d -exec basename {} \;)
                 fi
-                local up_commands="--no-provision"
+                local up_commands='--no-provision'
                 COMPREPLY=($(compgen -W "${up_commands} ${vm_list}" -- ${cur}))
                 return 0
                 ;;
-            "ssh"|"provision"|"reload"|"halt"|"suspend"|"resume"|"ssh-config")
+            ssh|provision|reload|halt|suspend|resume|ssh-config)
                 vagrant_state_file=$(__vagrantinvestigate) || return 1
                 if [[ -f $vagrant_state_file ]]
                 then
@@ -96,22 +96,22 @@ _vagrant() {
                 COMPREPLY=($(compgen -W "${running_vm_list}" -- ${cur}))
                 return 0
                 ;;
-            "box")
-                box_commands="add help list remove repackage"
+            box)
+                box_commands='add help list remove repackage'
                 COMPREPLY=($(compgen -W "${box_commands}" -- ${cur}))
                 return 0
                 ;;
-            "plugin")
-                plugin_commands="install license list uninstall update"
+            plugin)
+                plugin_commands='install license list uninstall update'
                 COMPREPLY=($(compgen -W "${plugin_commands}" -- ${cur}))
                 return 0
                 ;;
-            "help")
+            help)
                 COMPREPLY=($(compgen -W "${commands}" -- ${cur}))
                 return 0
                 ;;
-            "snapshot")
-                snapshot_commands="back delete go list take"
+            snapshot)
+                snapshot_commands='back delete go list take'
                 COMPREPLY=($(compgen -W "${snapshot_commands}" -- ${cur}))
                 return 0
                 ;;
@@ -124,15 +124,15 @@ _vagrant() {
     then
       action="${COMP_WORDS[COMP_CWORD-2]}"
       case "$action" in
-          "up")
+          up)
               if [ "$prev" == "--no-provision" ]; then
                   COMPREPLY=($(compgen -W "${vm_list}" -- ${cur}))
                   return 0
               fi
               ;;
-          "box")
+          box)
               case "$prev" in
-                  "remove"|"repackage")
+                  remove|repackage)
                       local box_list=$(find $HOME/.vagrant.d/boxes -mindepth 1 -maxdepth 1 -type d -exec basename {} \;|sed -e 's/-VAGRANTSLASH-/\//')
                       COMPREPLY=($(compgen -W "${box_list}" -- ${cur}))
                       return 0
@@ -140,7 +140,7 @@ _vagrant() {
                   *)
               esac
               ;;
-          "snapshot")
+          snapshot)
               if [ "$prev" == "go" ]; then
                   local snapshot_list=$(vagrant snapshot list | awk '/Name:/ { print $2 }')
                   COMPREPLY=($(compgen -W "${snapshot_list}" -- ${cur}))
