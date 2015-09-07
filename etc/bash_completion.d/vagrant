@@ -24,9 +24,8 @@
 # SOFTWARE.
 
 
-__vagrantboxes() {
-    find "$HOME/.vagrant.d/boxes" -maxdepth 1 -mindepth 1 -type d -printf '%P\n' | sed 's/-VAGRANTSLASH-/\//' 2>/dev/null
-}
+# ensure vagrant is on the PATH
+hash vagrant &>/dev/null && {
 
 __vagrantinvestigate() {
     local path
@@ -173,3 +172,5 @@ _vagrant() {
 }
 
 complete -F _vagrant vagrant
+
+}
