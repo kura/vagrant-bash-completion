@@ -67,7 +67,7 @@ __vagrantvms() {
     fi
 }
 
-_vagrant() {
+__vagrant(){
 
     local box_commands box_list cur environments plugin_commands prev running_vm_list snapshot_commands snapshot_list up_commands vm_list
 
@@ -171,6 +171,6 @@ _vagrant() {
     fi
 }
 
-complete -F _vagrant vagrant
+complete -F __vagrant vagrant
 
 }
