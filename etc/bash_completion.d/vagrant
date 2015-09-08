@@ -3,6 +3,7 @@
 # (The MIT License)
 #
 # Copyright (c) 2014 Kura
+# Copyright (c) 2015 Six <brbsix@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the 'Software'), to deal
@@ -23,131 +24,553 @@
 # SOFTWARE.
 
 
-__pwdln() {
-   pwdmod="${PWD}/"
-   itr=0
-   until [[ -z "$pwdmod" ]];do
-      itr=$(($itr+1))
-      pwdmod="${pwdmod#*/}"
-   done
-   echo -n $(($itr-1))
+# ensure vagrant is on the PATH
+hash vagrant &>/dev/null && {
+
+__vagrant_complete(){
+    local command_options=''
+
+    command_options=$(__vagrant_list_options "$@")
+    [[ -z $command_options ]] && return 1
+
+    readarray -t COMPREPLY < <(compgen -W "$command_options" -- "$cur")
+
+    return 0
 }
 
-__vagrantinvestigate() {
-   if [ -n "$VAGRANT_CWD" ];then
-     if [ -f "${VAGRANT_CWD}/.vagrant" -o -d "${VAGRANT_CWD}/.vagrant" ];then
-        echo "${VAGRANT_CWD}/.vagrant"
+__vagrant_complete_providers(){
+    local providers=()
+
+    providers=(docker hyperv libvirt lxc virtualbox vmware_fusion)
+
+    readarray -t COMPREPLY < <(compgen -W "${providers[*]}" -- "$cur")
+
+    return 0
+}
+
+__vagrant_complete_provisioners(){
+    local provisioners=()
+
+    provisioners=(ansible cfengine chef_apply chef_client chef_solo \
+                  chef_zero docker file puppet puppet_server salt shell)
+
+    readarray -t COMPREPLY < <(compgen -W "${provisioners[*]}" -- "$cur")
+
+    return 0
+}
+
+__vagrant_get_boxes(){
+
+    local vagrant_boxes=''
+
+    vagrant_boxes=$(find "$HOME/.vagrant.d/boxes" -maxdepth 1 -mindepth 1 -type d -printf '%P\n' 2>/dev/null | sed 's/-VAGRANTSLASH-/\//')
+
+    [[ -z $vagrant_boxes ]] && return 1
+
+    echo "$vagrant_boxes"
+}
+
+__vagrant_get_commands(){
+
+    local vagrant_commands='' vagrant_output=''
+
+    # local must be declared beforehand in order to return an accurate exit status here
+    vagrant_output=$(vagrant list-commands 2>/dev/null) || return 1
+
+    # `NF != 0` is there solely to insure against any errata appended to list-commands output at a later date
+    vagrant_commands=$(awk '/^$/ {while (getline && NF != 0) print $1}' <<<"$vagrant_output" | sort)
+
+    [[ -z $vagrant_commands ]] && return 1
+
+    echo "$vagrant_commands"
+}
+
+__vagrant_get_environments(){
+
+    local vagrant_environments='' vagrant_output=''
+
+    # local must be declared beforehand in order to return an accurate exit status here
+    vagrant_output=$(vagrant global-status 2>/dev/null) || return 1
+
+    vagrant_environments=$(awk '/^-+$/ {while (getline && NF != 0) print $1}' <<<"$vagrant_output")
+
+    [[ -z $vagrant_environments ]] && return 1
+
+    echo "$vagrant_environments"
+}
+
+__vagrant_get_nonrunning_vms(){
+
+    local vagrant_output='' vagrant_vms=''
+
+    # local must be declared beforehand in order to return an accurate exit status here
+    vagrant_output=$(vagrant status 2>/dev/null) || return 1
+
+    vagrant_vms=$(awk '/^$/ {while (getline && NF != 0) if ($2 != "running") print $1}' <<<"$vagrant_output")
+
+    [[ -z $vagrant_vms ]] && return 1
+
+    echo "$vagrant_vms"
+}
+
+# ignore current word and actions
+__vagrant_get_options(){
+
+    local arg
+
+    for arg in "${COMP_WORDS[@]:0:$((${#COMP_WORDS[@]}-1))}"; do
+        [[ $arg = -* ]] && echo "$arg"
+    done
+
+    return 0
+}
+
+__vagrant_get_running_vms(){
+
+    local vagrant_output='' vagrant_vms=''
+
+    # local must be declared beforehand in order to return an accurate exit status here
+    vagrant_output=$(vagrant status 2>/dev/null) || return 1
+
+    vagrant_vms=$(awk '/^$/ {while (getline && NF != 0) if ($2 != "poweroff") print $1}' <<<"$vagrant_output")
+
+    [[ -z $vagrant_vms ]] && return 1
+
+    echo "$vagrant_vms"
+}
+
+__vagrant_get_snapshots(){
+
+    local vagrant_output='' vagrant_snapshots=''
+
+    # local must be declared beforehand in order to return an accurate exit status here
+    vagrant_output=$(vagrant snapshot list 2>/dev/null) || return 1
+
+    vagrant_snapshots=$(awk '$1 ~ /Name:/ {print $2}' <<<"$vagrant_output")
+
+    [[ -z $vagrant_snapshots ]] && return 1
+
+    echo "$vagrant_snapshots"
+}
+
+__vagrant_get_subcommands(){
+
+    local vagrant_output='' vagrant_subcommands=''
+
+    # local must be declared beforehand in order to return an accurate exit status here
+    vagrant_output=$(vagrant help "$1" 2>/dev/null) || return 1
+
+    vagrant_subcommands=$(awk '/^Available subcommands:$/ {while (getline && NF == 1) print $1}' <<<"$vagrant_output")
+    # vagrant_subcommands=$(awk '/^     [a-z]+$/ {print $1}' <<<"$vagrant_output")
+
+    [[ -z $vagrant_subcommands ]] && return 1
+
+    echo "$vagrant_subcommands"
+}
+
+__vagrant_get_vms(){
+
+    local vagrant_output='' vagrant_vms=''
+
+    # local must be declared beforehand in order to return an accurate exit status here
+    vagrant_output=$(vagrant status 2>/dev/null) || return 1
+
+    vagrant_vms=$(awk '/^$/ {while (getline && NF != 0) print $1}' <<<"$vagrant_output")
+
+    [[ -z $vagrant_vms ]] && return 1
+
+    echo "$vagrant_vms"
+}
+
+# ignore current word and options
+__vagrant_get_words(){
+
+    eval set -- "${COMP_WORDS[@]:0:$((${#COMP_WORDS[@]}-1))}"
+
+    while (( $# > 0 )); do
+        # some options consume an argument
+        if [[ $1 =~ ^(--base|--box|--box-version|-c|--cacert|--capath|--cert|--checksum|--checksum-type|--command|--entry-point|--host|--include|--name|--output|--provider|--plugin-source|--plugin-version|--provision-with|-t|--token|--vagrantfile)$ ]]; then
+            shift
+        # some share plugin options consume an argument
+        elif [[ $1 =~ ^(--domain|--http|--https|--name|--ssh-port|--static-ip)$ ]]; then
+            shift
+        elif [[ $1 != -* ]]; then
+            echo "$1"
+        fi
+        shift
+    done
+}
+
+# accept options as arguments and output unused options
+__vagrant_list_options(){
+
+    local opt opts=()
+
+    for opt in "$@"; do
+        __vagrant_test_option "$opt" || opts+=("$opt")
+    done
+
+    echo "${opts[@]}"
+}
+
+# accept option as argument and return successfully if option has already been used
+__vagrant_test_option(){
+
+    local option
+
+    for option in "${options[@]}"; do
+        [[ $option = "$1" ]] && return 0
+    done
+
+    return 1
+}
+
+__vagrant(){
+
+    local action='' cur='' options=() subaction='' words=()
+
+    cur=${COMP_WORDS[COMP_CWORD]}
+    prev=${COMP_WORDS[COMP_CWORD-1]}
+
+    readarray -t options < <(__vagrant_get_options)
+    readarray -t words < <(__vagrant_get_words)
+
+    action=${words[1]}
+    subaction=${words[2]}
+
+    # NOTE: the following vars are cached in the global environment for speedy completion in the future
+    #       __vagrant_commands
+    #       __vagrant_box_commands
+    #       __vagrant_plugin_commands
+    #       __vagrant_snapshot_commands
+
+    if (( ${#words[@]} == 1 )); then
+
+        # DEFAULTS: box connect destroy docker-logs docker-run global-status
+        #           halt help init list-commands login package plugin provision
+        #           push rdp reload resume rsync rsync-auto share ssh ssh-config
+        #           status suspend up version
+
+        # get vagrant commands only if they are not already cached
+        [[ -z $__vagrant_commands ]] && {
+            __vagrant_commands=$(__vagrant_get_commands) || return 1
+        }
+
+        readarray -t COMPREPLY < <(compgen -W "$__vagrant_commands" -- "$cur")
+
         return 0
-     fi
-   fi
-   if [ -f "${PWD}/.vagrant" -o -d "${PWD}/.vagrant" ];then
-      echo "${PWD}/.vagrant"
-      return 0
-   else
-      pwdmod2="${PWD}"
-      for (( i=2; i<=$(__pwdln); i++ ));do
-         pwdmod2="${pwdmod2%/*}"
-         if [ -f "${pwdmod2}/.vagrant" -o -d "${pwdmod2}/.vagrant" ];then
-            echo "${pwdmod2}/.vagrant"
-            return 0
-         fi
-      done
-   fi
-   return 1
-}
 
-_vagrant() {
-    cur="${COMP_WORDS[COMP_CWORD]}"
-    prev="${COMP_WORDS[COMP_CWORD-1]}"
-    commands="snapshot box connect destroy docker-logs docker-run global-status halt help init list-commands login package plugin provision rdp reload resume rsync rsync-auto share ssh ssh-config status suspend up version"
+    elif (( ${#words[@]} == 2 )); then
 
-    if [ $COMP_CWORD == 1 ]
-    then
-      COMPREPLY=($(compgen -W "${commands}" -- ${cur}))
-      return 0
-    fi
+        case "$action" in
 
-    if [ $COMP_CWORD == 2 ]
-    then
-        case "$prev" in
-            "init")
-                local box_list=$(find $HOME/.vagrant.d/boxes -mindepth 1 -maxdepth 1 -type d -exec basename {} \;|sed -e 's/-VAGRANTSLASH-/\//')
-                COMPREPLY=($(compgen -W "${box_list}" -- ${cur}))
+            box)
+                # DEFAULTS: add help list outdated remove repackage update
+
+                # get box commands only if they are not already cached
+                [[ -z $__vagrant_box_commands ]] && {
+                    __vagrant_box_commands=$(__vagrant_get_subcommands box) || return 1
+                }
+
+                readarray -t COMPREPLY < <(compgen -W "$__vagrant_box_commands" -- "$cur")
+
                 return 0
                 ;;
-            "up")
-                vagrant_state_file=$(__vagrantinvestigate) || return 1
-                if [[ -d $vagrant_state_file ]]
-                then
-                    vm_list=$(find $vagrant_state_file/machines -mindepth 1 -maxdepth 1 -type d -exec basename {} \;)
+
+            connect)
+                [[ $prev = --static-ip ]] && return 0
+
+                __vagrant_complete --disable-static-ip --ssh --static-ip
+
+                return $?
+                ;;
+
+            destroy)
+                local destroy_options='' environments=''
+
+                destroy_options=$(__vagrant_list_options -f --force)
+                environments=$(__vagrant_get_environments) || return 1
+
+                readarray -t COMPREPLY < <(compgen -W "$destroy_options $environments" -- "$cur")
+
+                return 0
+                ;;
+
+            docker-logs)
+                __vagrant_complete --follow --no-follow --no-prefix --prefix
+
+                return $?
+                ;;
+
+            docker-run)
+                __vagrant_complete --detach --no-detach --no-rm --no-tty -r --rm -t --tty
+
+                return $?
+                ;;
+
+            global-status)
+                __vagrant_complete --prune
+
+                return $?
+                ;;
+
+            halt|provision|resume|rsync|rsync-auto|ssh|ssh-config|suspend)
+                local command_options='' running_vm_list=''
+
+                case "$action" in
+
+                    halt)
+                        command_options=$(__vagrant_list_options -f --force)
+                        ;;
+
+                    provision)
+                        if [[ $prev = --provision-with ]]; then
+                            __vagrant_complete_provisioners
+                            return $?
+                        fi
+
+                        command_options=$(__vagrant_list_options --provision-with)
+                        ;;
+
+                    rsync-auto)
+                        command_options=$(__vagrant_list_options --no-poll --poll)
+                        ;;
+
+                    ssh)
+                        [[ $prev =~ ^(-c|--command)$ ]] && return 0
+
+                        command_options=$(__vagrant_list_options -c --command -p --plain)
+                        ;;
+
+                    ssh-config)
+                        [[ $prev = --host ]] && return 0
+
+                        command_options=$(__vagrant_list_options --host)
+                        ;;
+
+                esac
+
+                running_vm_list=$(__vagrant_get_running_vms) || return 1
+
+                readarray -t COMPREPLY < <(compgen -W "$command_options $running_vm_list" -- "$cur")
+
+                return 0
+                ;;
+
+            help)
+                # get vagrant commands only if they are not already cached
+                [[ -z $__vagrant_commands ]] && {
+                    __vagrant_commands=$(__vagrant_get_commands) || return 1
+                }
+
+                readarray -t COMPREPLY < <(compgen -W "$__vagrant_commands" -- "$cur")
+
+                return 0
+                ;;
+
+            init)
+                [[ $prev = --output ]] && return 0
+
+                local box_list='' init_options=''
+
+                init_options=$(__vagrant_list_options -f --force -m --minimal --output)
+                box_list=$(__vagrant_get_boxes) || return 1
+
+                readarray -t COMPREPLY < <(compgen -W "$init_options $box_list" -- "$cur")
+
+                return 0
+                ;;
+
+            login)
+                [[ $prev =~ ^(-t|--token)$ ]] && return 0
+
+                __vagrant_complete -c --check -k --logout -t --token
+
+                return $?
+                ;;
+
+            package)
+                [[ $prev =~ ^(--base|--output|--include|--vagrantfile)$ ]] && return 0
+
+                __vagrant_complete --base --include --output --vagrantfile
+
+                return $?
+                ;;
+
+            plugin)
+                # DEFAULTS: install license list uninstall update
+
+                # get plugin commands only if they are not already cached
+                [[ -z $__vagrant_plugin_commands ]] && {
+                    __vagrant_plugin_commands=$(__vagrant_get_subcommands plugin) || return 1
+                }
+
+                readarray -t COMPREPLY < <(compgen -W "$__vagrant_plugin_commands" -- "$cur")
+
+                return 0
+                ;;
+
+            reload)
+                if [[ $prev = --provision-with ]]; then
+                    __vagrant_complete_provisioners
+                    return $?
                 fi
-                local up_commands="--no-provision"
-                COMPREPLY=($(compgen -W "${up_commands} ${vm_list}" -- ${cur}))
+
+                local command_options='' vm_list=''
+
+                command_options=$(__vagrant_list_options --no-provision --provision --provision-with)
+                vm_list=$(__vagrant_get_vms) || return 1
+
+                readarray -t COMPREPLY < <(compgen -W "$up_options $vm_list" -- "$cur")
+
                 return 0
                 ;;
-            "ssh"|"provision"|"reload"|"halt"|"suspend"|"resume"|"ssh-config")
-                vagrant_state_file=$(__vagrantinvestigate) || return 1
-                if [[ -f $vagrant_state_file ]]
-                then
-                      running_vm_list=$(grep 'active' $vagrant_state_file | sed -e 's/"active"://' | tr ',' '\n' | cut -d '"' -f 2 | tr '\n' ' ')
-                else
-                      running_vm_list=$(find $vagrant_state_file -type f -name "id" | awk -F"/" '{print $(NF-2)}')
+
+            share)
+                [[ $prev =~ ^(--domain|--http|--https|--name|--ssh-port)$ ]] && return 0
+
+                __vagrant_complete --disable-http --domain --http --https --name --ssh --ssh-no-password --ssh-once --ssh-port
+
+                return 0
+                ;;
+
+            snapshot)
+                # DEFAULTS: back delete go list take
+
+                # get snapshot commands only if they are not already cached
+                [[ -z $__vagrant_snapshot_commands ]] && {
+                    __vagrant_snapshot_commands=$(__vagrant_get_subcommands snapshot) || return 1
+                }
+
+                readarray -t COMPREPLY < <(compgen -W "$__vagrant_snapshot_commands" -- "$cur")
+
+                return 0
+                ;;
+
+            up)
+                if [[ $prev = --provider ]]; then
+                    __vagrant_complete_providers
+                    return $?
+                elif [[ $prev = --provision-with ]]; then
+                    __vagrant_complete_provisioners
+                    return $?
                 fi
-                COMPREPLY=($(compgen -W "${running_vm_list}" -- ${cur}))
+
+                local up_options='' nonrunning_vm_list=''
+
+                up_options=$(__vagrant_list_options --destroy-on-error --no-destroy-on-error --no-parallel --no-provision --parallel --provider --provision --provision-with)
+                nonrunning_vm_list=$(__vagrant_get_nonrunning_vms) || return 1
+
+                readarray -t COMPREPLY < <(compgen -W "$up_options $nonrunning_vm_list" -- "$cur")
+
                 return 0
                 ;;
-            "box")
-                box_commands="add help list remove repackage"
-                COMPREPLY=($(compgen -W "${box_commands}" -- ${cur}))
-                return 0
-                ;;
-            "plugin")
-                plugin_commands="install license list uninstall update"
-                COMPREPLY=($(compgen -W "${plugin_commands}" -- ${cur}))
-                return 0
-                ;;
-            "help")
-                COMPREPLY=($(compgen -W "${commands}" -- ${cur}))
-                return 0
-                ;;
-            "snapshot")
-                snapshot_commands="back delete go list take"
-                COMPREPLY=($(compgen -W "${snapshot_commands}" -- ${cur}))
-                return 0
-                ;;
-            *)
-            ;;
+
         esac
-    fi
 
-    if [ $COMP_CWORD == 3 ]
-    then
-      action="${COMP_WORDS[COMP_CWORD-2]}"
-      case "$action" in
-          "up")
-              if [ "$prev" == "--no-provision" ]; then
-                  COMPREPLY=($(compgen -W "${vm_list}" -- ${cur}))
-                  return 0
-              fi
-              ;;
-          "box")
-              case "$prev" in
-                  "remove"|"repackage")
-                      local box_list=$(find $HOME/.vagrant.d/boxes -mindepth 1 -maxdepth 1 -type d -exec basename {} \;|sed -e 's/-VAGRANTSLASH-/\//')
-                      COMPREPLY=($(compgen -W "${box_list}" -- ${cur}))
-                      return 0
-                      ;;
-                  *)
-              esac
-              ;;
-          "snapshot")
-              if [ "$prev" == "go" ]; then
-                  local snapshot_list=$(vagrant snapshot list | awk '/Name:/ { print $2 }')
-                  COMPREPLY=($(compgen -W "${snapshot_list}" -- ${cur}))
-                  return 0
-              fi
-              ;;
-      esac
+    elif (( ${#words[@]} == 3 )); then
+
+        case "$action" in
+
+            box)
+                case "$subaction" in
+
+                    add)
+                        if [[ $prev =~ ^(--box-version|--cacert|--capath|--cert|--checksum|--checksum-type|--name|--provider)$ ]]; then
+                            return 0
+                        elif [[ $prev = --provider ]]; then
+                            __vagrant_complete_providers
+                            return $?
+                        fi
+
+                        __vagrant_complete --box-version -c --cacert --capath \
+                                           --cert --checksum --checksum-type \
+                                           --clean -f --force --insecure \
+                                           --location-trusted --name --provider
+                        return $?
+                        ;;
+
+                    list)
+                        __vagrant_complete -i --box-info
+                        return $?
+                        ;;
+
+                    outdated)
+                        __vagrant_complete --global
+                        return $?
+                        ;;
+
+                    remove)
+                        [[ $prev =~ ^(--box-version|--provider)$ ]] && return 0
+
+                        local remove_options=''
+
+                        remove_options=$(__vagrant_list_options -f --force -m --minimal --output)
+                        ;;
+
+                    update)
+                        if [[ $prev =~ ^(--box|--provider)$ ]]; then
+                            return 0
+                        elif [[ $prev = --provider ]]; then
+                            __vagrant_complete_providers
+                            return $?
+                        fi
+
+                        __vagrant_complete --box --provider
+                        return $?
+                        ;;
+
+                esac
+
+                if [[ $subaction =~ ^(remove|repackage)$ ]]; then
+                    local box_list=''
+
+                    box_list=$(__vagrant_get_boxes) || return 1
+
+                    readarray -t COMPREPLY < <(compgen -W "$remove_options $box_list" -- "$cur")
+
+                    return 0
+                fi
+                ;;
+
+            plugin)
+                case "$subaction" in
+                    install)
+                        [[ $prev =~ ^(--entry-point|--plugin-source|--plugin-version)$ ]] && return 0
+
+                        __vagrant_complete --entry-point --plugin-prerelease \
+                                           --plugin-source --plugin-version \
+                                           --verbose
+                        return $?
+                        ;;
+                esac
+                ;;
+
+            snapshot)
+                case "$subaction" in
+                    go)
+                        local go_options=''
+
+                        go_options=$(__vagrant_list_options -r --reload)
+                        ;;
+                esac
+
+                if [[ $subaction =~ ^(delete|go)$ ]]; then
+                    local snapshot_list=''
+
+                    snapshot_list=$(__vagrant_get_snapshots) || return 1
+
+                    readarray -t COMPREPLY < <(compgen -W "$go_options $snapshot_list" -- "$cur")
+
+                    return 0
+                fi
+                ;;
+
+        esac
+
     fi
 }
-complete -F _vagrant vagrant
+
+complete -F __vagrant vagrant
+
+}
