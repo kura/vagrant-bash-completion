@@ -150,4 +150,12 @@ _vagrant() {
       esac
     fi
 }
-complete -F _vagrant vagrant
+
+case $( uname -s | tr '[:upper:]' '[:lower:]' ) in
+    cygwin*|mingw*)
+        complete -F _vagrant vagrant.exe
+        ;;
+    *)
+        complete -F _vagrant vagrant
+        ;;
+esac
