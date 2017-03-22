@@ -71,7 +71,7 @@ _vagrant() {
     then
         case "$prev" in
             "init")
-                local box_list=$(find $HOME/.vagrant.d/boxes -mindepth 1 -maxdepth 1 -type d -exec basename {} \;|sed -e 's/-VAGRANTSLASH-/\//')
+                local box_list=$(find ${VAGRANT_HOME:-$HOME/.vagrant.d}/boxes -mindepth 1 -maxdepth 1 -type d -exec basename {} \;|sed -e 's/-VAGRANTSLASH-/\//')
                 COMPREPLY=($(compgen -W "${box_list}" -- ${cur}))
                 return 0
                 ;;
@@ -97,7 +97,7 @@ _vagrant() {
                 return 0
                 ;;
             "box")
-                box_commands="add help list remove repackage"
+                box_commands="add help list prune remove repackage update"
                 COMPREPLY=($(compgen -W "${box_commands}" -- ${cur}))
                 return 0
                 ;;
@@ -133,7 +133,7 @@ _vagrant() {
           "box")
               case "$prev" in
                   "remove"|"repackage")
-                      local box_list=$(find $HOME/.vagrant.d/boxes -mindepth 1 -maxdepth 1 -type d -exec basename {} \;|sed -e 's/-VAGRANTSLASH-/\//')
+                      local box_list=$(find ${VAGRANT_HOME:-$HOME/.vagrant.d}/boxes -mindepth 1 -maxdepth 1 -type d -exec basename {} \;|sed -e 's/-VAGRANTSLASH-/\//')
                       COMPREPLY=($(compgen -W "${box_list}" -- ${cur}))
                       return 0
                       ;;
@@ -150,4 +150,12 @@ _vagrant() {
       esac
     fi
 }
-complete -F _vagrant vagrant
+
+case $( uname -s | tr '[:upper:]' '[:lower:]' ) in
+    cygwin*|mingw*)
+        complete -F _vagrant vagrant.exe
+        ;;
+    *)
+        complete -F _vagrant vagrant
+        ;;
+esac

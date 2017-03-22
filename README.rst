@@ -1,8 +1,14 @@
-Getting stuff merged
-====================
+The Fork
+========
 
-If you have a pull request you want merged, shout at me
-on Twitter [at]kuramanga or via email kura[at]kura[dot]io
+This has been forked from [kura's repo][kura-vbc]. At the time of this
+commit that repo had [four open PRs][kura-pr] the oldest of which was
+a year old. I tried to contact him by e-mail but his domain
+(`kura.io`) has expired. Thus, I've forked this, brought in all open
+PRs and will be merging any further PRs offered to this repo.
+
+[kura-vbc]: https://github.com/kura/vagrant-bash-completion
+[kura-pr]: https://github.com/kura/vagrant-bash-completion/pulls
 
 
 Installation
