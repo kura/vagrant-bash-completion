@@ -1,3 +1,13 @@
+====================
+NO LONGER MAINTAINED
+====================
+
+My interest in Vagrant and thus this code waned some time ago. Fortunately the
+wonderful `brbsix <https://github.com/brbsix/vagrant-bash-completion>`_ and I
+fully endorse this.
+
+*********************************************************************
+
 Getting stuff merged
 ====================
 
